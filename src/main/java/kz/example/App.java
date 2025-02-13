@@ -1,13 +1,16 @@
 package kz.example;
 
-/**
- * Hello world!
- *
- */
-public class App 
+import java.sql.SQLException;
+
+public class App
 {
-    public static void main( String[] args )
-    {
-        System.out.println( "Hello World!" );
+    public static void main( String[] args ) throws InterruptedException, SQLException {
+        Action action = new Action();
+
+        Library library = new Library(action);
+        ControlViewOptions cv = new ControlViewOptions();
+
+        ControlAuth controller = new ControlAuth(library, cv, action);
+        controller.run();
     }
 }

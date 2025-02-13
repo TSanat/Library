@@ -1,81 +1,104 @@
-import java.util.ArrayList;
-import java.util.Scanner;
+package kz.example;
+import java.sql.*;
+import java.util.*;
 
-public class LibraryControlUsers {
-    private final ArrayList<User> users;
-    private final ArrayList<User> admins;
+public class LibraryControlUsers extends SqlDatas{
+
     private final Action action;
-    public LibraryControlUsers(ArrayList<User> users, ArrayList<User> admins, Action action) {
-        this.admins = admins;
-        this.users = users;
+    public LibraryControlUsers(Action action) {
         this.action = action;
     }
     public void addAdmin(User user) throws InterruptedException {
-        for(User u : users){
-            if(u.getUsername().equals(user.getUsername())){
-                System.err.println(user.getUsername() + " have already exist!!!");
-                Thread.sleep(300);
-                return;
-            }
+        String query = "INSERT INTO public.admins(id, username, password, status) VALUES (?, ?, ?, ?);";
+        try(Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
+            PreparedStatement pstmt = conn.prepareStatement(query)){
+            pstmt.setInt(1, user.getId());
+            pstmt.setString(2, user.getUsername());
+            pstmt.setString(3, user.getPassword());
+            pstmt.setInt(4, 1);
+            pstmt.executeUpdate();
+            action.addAction("Admin " + user.getUsername() + " registered");
+            adminId++;
+
+        }catch (SQLException e){
+            e.printStackTrace();
         }
-        admins.add(user);
-        action.addAction(user.getUsername() + " was registered at");
-        ControlAuth.userId++;
     }
     public void removeAdmin(User admin) throws InterruptedException {
-        if(admin == null){
-            System.err.println("Admin is not exist!!!");
-            Thread.sleep(300);
-        }
-        else{
-            admins.remove(admin);
-            System.out.println("Admin with id " + admin.getId() + " have been removed!!!");
-            action.addAction("Admin " + admin.getUsername() + " was removed at");
+        String query = "DELETE FROM public.admins WHERE id = ?;";
+        try(Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
+        PreparedStatement pstmt = conn.prepareStatement(query)){
+            pstmt.setInt(1, admin.getId());
+            pstmt.executeUpdate();
+            action.addAction("Admin " + admin.getUsername() + " removed");
+        } catch (SQLException e){
+            e.printStackTrace();
         }
     }
     public boolean addUser(User user) throws InterruptedException {
-        for(User user1 : users){
-            if(user.getUsername().equals(user1.getUsername())){
-                System.err.println(user.getUsername() + " have already exist!!!");
-                Thread.sleep(300);
-                return false;
-            }
-        }
-        users.add(user);
-        action.addAction("User " + user.getUsername() + " was added at");
-        ControlAuth.userId++;
-        System.out.println(user.getUsername() + " have been added!!!");
-        return true;
-    }
-    public boolean removeUser(User user) throws InterruptedException {
-        if(user == null){
-            System.err.println("User is not exist!!!");
-            Thread.sleep(300);
-            return false;
-        }
-        else{
-            users.remove(user);
-            action.addAction("User " + user.getUsername() + " was removed at");
-            System.out.println(user.getUsername() + " have been removed!!!");
+        String query = "INSERT INTO public.users(id, username, password, status, borrowedbooks) VALUES (?, ?, ?, ?, ?);";
+        try(Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
+            PreparedStatement pstmt = conn.prepareStatement(query)){
+            Integer[] arr = new Integer[0];
+            pstmt.setInt(1, user.getId());
+            pstmt.setString(2, user.getUsername());
+            pstmt.setString(3, user.getPassword());
+            pstmt.setInt(4, 2);
+            Array sqlArray = conn.createArrayOf("integer", arr);
+            pstmt.setArray(5, sqlArray);
+            pstmt.executeUpdate();
             return true;
+        }catch (SQLException e){
+            e.printStackTrace();
         }
+        return false;
+    }
+    public boolean removeUser(User user, Library library){
+        String query = "DELETE FROM public.users WHERE id = ?;";
+        ArrayList<Long> arr = user.getBorrowedBooks();
+        for(long l : arr){
+            Book book = library.getBookById((int) l);
+            user.removeBook(book);
+            book.addInStock();
+            System.out.println("Book " + book.getTitle() + " was returned successfully!!!");
+            action.addAction("Book " + book.getId() + " returnedBy" + user.getUsername());
+        }
+        try(Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
+            PreparedStatement pstmt = conn.prepareStatement(query)){
+            pstmt.setInt(1, user.getId());
+            action.addAction("User " + user.getUsername() + " removed");
+            pstmt.executeUpdate();
+            return true;
+        } catch (SQLException e){
+            e.printStackTrace();
+        }
+        return false;
     }
     public void viewAllUsersAdmins(User user){
-        action.addAction("Admin " + user.getUsername() + " requested to see the list of all users and admins");
-        int ia = 1;
-        System.out.println("Admins: ");
-        for(User admin : admins){
-            System.out.println(ia + ": " + admin.getUsername());
-            ia++;
-        }
-        ia = 1;
-        System.out.println("\nUsers: ");
-        for(User user1 : users){
-            System.out.println(ia + ": " + user1.getUsername());
-            ia++;
+        String getAdmin = "SELECT username FROM public.admins;";
+        String getUsers = "SELECT username FROM public.users;";
+
+        try(Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
+        Statement st = conn.createStatement();
+        ResultSet rs = st.executeQuery(getAdmin);
+        Statement st1 = conn.createStatement();
+        ResultSet rs1 = st1.executeQuery(getUsers)){
+            System.out.println("Admins: ");
+            while (rs.next()){
+                System.out.println("   Username: " + rs.getString("username"));
+            }
+            System.out.println("Users: ");
+            while (rs1.next()){
+                System.out.println("   Username: " + rs1.getString("username"));
+            }
+            action.addAction("Admin " + user.getUsername() + " viewedAllUser");
+        } catch (SQLException e){
+            e.printStackTrace();
         }
     }
     public void setPassword(User user) throws InterruptedException {
+        String updateUser = "UPDATE public.users SET password=? WHERE id = ?;";
+        String updateAdmin = "UPDATE public.admins SET password=? WHERE id = ?;";
         System.out.print("Enter the old password: ");
         Scanner scan = new Scanner(System.in);
         String s = scan.next();
@@ -83,17 +106,31 @@ public class LibraryControlUsers {
             System.out.print("Enter the new password: ");
             s = scan.next();
             user.setPassword(s);
-            action.addAction(user.getUsername() + " changed password at");
+            if(user.getStatus() == 1){
+                try(Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
+                PreparedStatement pstmt = conn.prepareStatement(updateAdmin)){
+                    pstmt.setString(1, s);
+                    pstmt.setInt(2, user.getId());
+                    pstmt.executeUpdate();
+                } catch (SQLException e){
+                    e.printStackTrace();
+                }
+            }
+            else {
+                try(Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
+                    PreparedStatement pstmt = conn.prepareStatement(updateUser)){
+                    pstmt.setString(1, s);
+                    pstmt.setInt(2, user.getId());
+                    pstmt.executeUpdate();
+                } catch (SQLException e){
+                    e.printStackTrace();
+                }
+            }
+            action.addAction("User(Admin) " + user.getUsername() + " changedPassword");
         }
         else{
             System.err.println("Password is incorrect!! Please try again LATER!!!");
             Thread.sleep(300);
         }
-    }
-    public void getInfo(User user){
-        System.out.print("\nYour ID: " + user.getId() + "\n" + "Your username: " + user.getUsername() + "\n" + "Your status: " );
-        if(user.getStatus() == 1) System.out.print("Admin");
-        else System.out.print("User");
-        System.out.println();
     }
 }

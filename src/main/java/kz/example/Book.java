@@ -1,9 +1,18 @@
-public class Book{
+package kz.example;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+
+public class Book extends SqlDatas{
     private int id;
     private String title;
     private String author;
     private int year;
     private int quantity;
+    private static final String set = "UPDATE public.books SET quantity=? WHERE id = ?";
+
     public Book(int id, String title, String author, int year, int quantity) {
         this.id = id;
         this.title = title;
@@ -23,32 +32,16 @@ public class Book{
         return id;
     }
 
-    public void setId(int id) {
-        this.id = id;
-    }
-
     public String getTitle() {
         return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
     }
 
     public String getAuthor() {
         return author;
     }
 
-    public void setAuthor(String author) {
-        this.author = author;
-    }
-
     public int getYear() {
         return year;
-    }
-
-    public void setYear(int year) {
-        this.year = year;
     }
 
     public boolean isAvailable() {
@@ -56,15 +49,26 @@ public class Book{
     }
 
     public int getQuantity(){ return quantity; }
-    public void setQuantity(int q) {
-        quantity = q;
-    }
 
     public void addInStock(){
-        quantity++;
+        try(Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
+            PreparedStatement pstme = conn.prepareStatement(set);){
+            pstme.setInt(1, getQuantity() + 1);
+            pstme.setInt(2, id);
+            pstme.executeUpdate();
+        } catch (SQLException e){
+            e.printStackTrace();
+        }
     }
 
     public void delInStock(){
-        quantity--;
+        try(Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
+            PreparedStatement pstme = conn.prepareStatement(set);){
+            pstme.setInt(1, getQuantity() - 1);
+            pstme.setInt(2, id);
+            pstme.executeUpdate();
+        } catch (SQLException e){
+            e.printStackTrace();
+        }
     }
 }

@@ -1,15 +1,16 @@
+package kz.example;
+import java.sql.*;
 import java.util.Scanner;
 
-public class ControlAuth {
-    public static int bookId = 1;
-    public static int userId = 1;
+public class ControlAuth extends SqlDatas{
+
     private static final Scanner scan = new Scanner(System.in);
     private static Library library;
     private static ControlViewOptions cv;
     private static UserView controlUser;
     private static AdminView controlAdmin;
     private static Action action;
-    public ControlAuth(Library library, ControlViewOptions cv, Action action) throws InterruptedException {
+    public ControlAuth(Library library, ControlViewOptions cv, Action action) throws InterruptedException, SQLException {
         ControlAuth.library = library;
         controlAdmin = new AdminView(library, cv, action);
         controlUser = new UserView(library, cv, action);
@@ -17,12 +18,6 @@ public class ControlAuth {
         ControlAuth.action = action;
     }
     public void run() throws InterruptedException {
-        library.addBook(new Book(bookId, "Nana", "Lermotov", 1856, 5));
-        library.addBook(new Book(bookId, "Little Prince", "Антуана де Сент-Экзюпери.", 1943, 3));
-        library.addBook(new Book(bookId, "The Night in Lisbon", "Erich Maria Remarque", 1962, 2));
-        library.addBook(new Book(bookId, "Triumphal arch", "Erich Maria Remarque", 1856, 4));
-        library.addBook(new Book(bookId, "Война и Мир", "Tolstoy", 1863, 7));
-        library.addAdmin(new User(userId, "Admin", "SSSccccv", 1));
         autorisation();
     }
     public static void autorisation() throws InterruptedException {
@@ -84,12 +79,19 @@ public class ControlAuth {
             if(username.equals("*exit*")){
                 return;
             }
-            System.out.print("Password(Write without any space): ");
-            String password = scan.next();
-            User user = new User(userId, username, password, 2);
-            if(library.addUser(user)){
-                action.addAction("User " + user.getUsername() + " was registered at");
-                controlUser.run(user);
+            if(library.checkUser(username)){
+                System.out.print("Password(Write without any space): ");
+                String password = scan.next();
+                User user = new User(userId, username, password, 2);
+                if(library.addUser(user)){
+                    action.addAction("User " + user.getUsername() + " registered");
+                    userId++;
+                    controlUser.run(user);
+                }
+            }
+            else {
+                System.err.println("This username is already taken!!!");
+                Thread.sleep(300);
             }
         }
     }

@@ -1,3 +1,5 @@
+package kz.example;
+
 import java.util.Scanner;
 
 public class AdminView {
@@ -15,7 +17,7 @@ public class AdminView {
         adminPage(user);
     }
     private void adminPage(User user) throws InterruptedException {
-        action.addAction("Admin " + user.getUsername() + " was signed at");
+        action.addAction("Admin " + user.getUsername() + " signed");
         while (true){
             Thread.sleep(300);
             cv.showAdminOptions();
@@ -26,11 +28,11 @@ public class AdminView {
                         library.getInfo(user);
                         break;
                     case 2:
-                        System.out.print("Enter title, author, year and quantity of the new book in new line: ");
+                        System.out.println("Enter title, author, year and quantity of the new book in new line: ");
+                        String s = scan.nextLine();
                         String title = scan.nextLine();
                         String author = scan.nextLine();
-                        int year = 0;
-                        String s = scan.nextLine();
+                        int year;
                         if(scan.hasNextInt()){
                             year = scan.nextInt();
                         }else {
@@ -38,7 +40,7 @@ public class AdminView {
                             Thread.sleep(300);
                             break;
                         }
-                        int quantity = 0;
+                        int quantity;
                         if(scan.hasNextInt()){
                             quantity = scan.nextInt();
                         }else {
@@ -46,14 +48,14 @@ public class AdminView {
                             Thread.sleep(300);
                             break;
                         }
-                        library.addBook(new Book(ControlAuth.bookId, title, author, year, quantity));
+                        library.addBook(new Book(ControlAuth.bookId, title, author, year, quantity), user);
                         break;
                     case 3:
                         library.viewAllBooks(user);
                         System.out.print("Enter id to remove a book: ");
                         if(scan.hasNextInt()){
                             int id = scan.nextInt();
-                            library.removeBook(id);
+                            library.removeBook(id, user);
                         }
                         else {
                             cv.numberMessage();
@@ -80,7 +82,7 @@ public class AdminView {
                         ControlAuth.autorisation();
                         break;
                     case 10:
-                        action.addAction("User " + user.getUsername() + " return back");
+                        action.addAction("User " + user.getUsername() + " backToAutPage");
                         ControlAuth.autorisation();
                         break;
                     default:

@@ -1,3 +1,4 @@
+package kz.example;
 public class ControlViewOptions {
     public ControlViewOptions() {
     }
@@ -30,13 +31,25 @@ public class ControlViewOptions {
                 5) View all available books\s
                 6) View my books\s
                 7) Change password\s
-                8) Change username\s
-                9) Delete account\s
-                10) Back
+                8) Delete account\s
+                9) Back
                 """);
     }
 
     public void numberMessage(){
         System.out.println("It must be the number!!!");
+    }
+    public void viewInfo(User user){
+        System.out.print("\nYour ID: " + user.getId() +
+                "\n" + "Your username: " + user.getUsername() +
+                "\n" + "Your status: " );
+        if(user.getStatus() == 1)
+            System.out.print("Admin");
+        else
+            System.out.print("User");
+        System.out.println();
+    }
+    public void viewBook(int sum, int id, String title, String author, int year){
+        System.out.println(sum + ") ID: " + id + "\n   Title: " + title + "\n   Author: " + author + "\n   Year: " + year);
     }
 }

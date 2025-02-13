@@ -1,3 +1,4 @@
+package kz.example;
 import java.util.Scanner;
 
 public class UserView {
@@ -15,7 +16,7 @@ public class UserView {
         userPage(user);
     }
     private void userPage(User user) throws InterruptedException {
-        action.addAction("User " + user.getUsername() + " was signed at");
+        action.addAction("User " + user.getUsername() + " signed");
         while (true){
             Thread.sleep(300);
             cv.showUserOptions();
@@ -61,16 +62,12 @@ public class UserView {
                         library.setPassword(user);
                         break;
                     case 8:
-                        System.out.print("Enter new username without any space: ");
-                        String name = scan.next();
-                        user.setUsername(name);
-                    case 9:
                         if(library.removeUser(user)){
                             ControlAuth.autorisation();
                         }
                         break;
-                    case 10:
-                        action.addAction("User " + user.getUsername() + " return back");
+                    case 9:
+                        action.addAction("User " + user.getUsername() + " backToAutPage");
                         ControlAuth.autorisation();
                         break;
                     default:
